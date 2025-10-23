@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { ContextManager } from './contextManager';
-import axios from 'axios';
 
 /**
  * Represents a chat message
@@ -85,39 +84,66 @@ Provide clear, concise, and accurate responses. When providing code, use proper 
 
     /**
      * Call the Arena API for chat completion
+     * This is a simplified implementation that creates a mock response
+     * In a real implementation, you would need to add a chat endpoint to the server
+     * or use the existing completion endpoints in a creative way
      */
     private async callArenaAPI(
         messages: Array<{role: string, content: string}>,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         try {
-            // For now, use a simple chat endpoint
-            // You may need to adjust this based on your actual API structure
-            const response = await axios.post(
-                `${this.serverUrl}/v1/chat/completions`,
+            // Build a comprehensive prompt from all messages
+            let fullPrompt = '';
+            for (const msg of messages) {
+                if (msg.role === 'system') {
+                    fullPrompt += `System Context:\n${msg.content}\n\n`;
+                } else if (msg.role === 'user') {
+                    fullPrompt += `User Question:\n${msg.content}\n\n`;
+                } else if (msg.role === 'assistant') {
+                    fullPrompt += `Assistant Response:\n${msg.content}\n\n`;
+                }
+            }
+
+            fullPrompt += `\nAssistant Response:`;
+
+            // Use fetch API instead of axios (built into Node.js 18+)
+            const response = await fetch(
+                `${this.serverUrl}/create_edit_pair`,
                 {
-                    model: this.currentModel,
-                    messages: messages,
-                    stream: !!onProgress,
-                    max_tokens: 2000,
-                    temperature: 0.7
-                },
-                {
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    timeout: 60000
+                    body: JSON.stringify({
+                        pairId: `chat-${Date.now()}`,
+                        prefix: '',
+                        suffix: '',
+                        codeToEdit: fullPrompt,
+                        userInput: 'Please provide a helpful response to the user\'s question.',
+                        language: 'markdown',
+                        userId: 'chat-user',
+                        privacy: 'Private',
+                        modelTags: ['edit']
+                    })
                 }
             );
 
-            if (response.data && response.data.choices && response.data.choices[0]) {
-                return response.data.choices[0].message.content;
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data && data.responseItems && data.responseItems[0]) {
+                // Return the first model's response
+                return data.responseItems[0].response;
             }
 
             throw new Error('Invalid response from API');
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                throw new Error(`API Error: ${error.response?.data?.error || error.message}`);
+            if (error instanceof Error) {
+                throw new Error(`API Error: ${error.message}`);
             }
             throw error;
         }
