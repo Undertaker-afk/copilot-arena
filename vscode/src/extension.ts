@@ -14,6 +14,7 @@ import { RankingChartViewProvider } from './rankingChartViewProvider';
 import { Disposable } from 'vscode';
 import { PromptToDiffHandler } from './promptToDiff';
 import { VerticalPerLineDiffManager } from './diff/verticalPerLine/manager';
+import { ChatViewProvider } from './chatViewProvider';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -106,10 +107,38 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.registerWebviewViewProvider(RankingChartViewProvider.viewType, rankingChartViewProvider)
 	);
 
+	// Register Chat View Provider
+	const chatViewProvider = new ChatViewProvider(context.extensionUri, context);
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider(ChatViewProvider.viewType, chatViewProvider)
+	);
+
 	// Add this new command registration
 	context.subscriptions.push(
 		vscode.commands.registerCommand('arena.openExternalUrl', (url: string) => {
 			vscode.env.openExternal(vscode.Uri.parse(url));
+		})
+	);
+
+	// Register chat commands
+	context.subscriptions.push(
+		vscode.commands.registerCommand('arena.openChat', () => {
+			vscode.commands.executeCommand('arena.chatView.focus');
+		}),
+		vscode.commands.registerCommand('arena.chatAddCurrentFile', async () => {
+			await chatViewProvider.addCurrentFileToContext();
+		}),
+		vscode.commands.registerCommand('arena.chatAddSelection', async () => {
+			await chatViewProvider.addSelectionToContext();
+		}),
+		vscode.commands.registerCommand('arena.chatSendMessage', async () => {
+			const message = await vscode.window.showInputBox({
+				prompt: 'Enter your message',
+				placeHolder: 'Ask a question about your code...'
+			});
+			if (message) {
+				await chatViewProvider.sendMessage(message);
+			}
 		})
 	);
 

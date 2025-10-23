@@ -75,3 +75,38 @@ export interface EditPairResponse {
     pairId: string;
     responseItems: ArenaEditItem[];
 }
+
+// Chat Types
+export interface ChatMessage {
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+    timestamp: Date;
+    model?: string;
+}
+
+export interface ContextItem {
+    type: 'file' | 'symbol' | 'selection' | 'terminal';
+    label: string;
+    description?: string;
+    uri?: string;
+    range?: {start: number; end: number};
+    content?: string;
+    language?: string;
+}
+
+export interface ChatRequest {
+    messages: Array<{role: string; content: string}>;
+    model: string;
+    stream?: boolean;
+    max_tokens?: number;
+    temperature?: number;
+}
+
+export interface ChatResponse {
+    choices: Array<{
+        message: {
+            content: string;
+            role: string;
+        };
+    }>;
+}

@@ -141,6 +141,22 @@
       {
         "command": "arena.rejectAllResponses",
         "title": "Arena: Reject All LLM Responses"
+      },
+      {
+        "command": "arena.openChat",
+        "title": "Arena: Open Chat"
+      },
+      {
+        "command": "arena.chatAddCurrentFile",
+        "title": "Arena: Add Current File to Chat Context"
+      },
+      {
+        "command": "arena.chatAddSelection",
+        "title": "Arena: Add Selection to Chat Context"
+      },
+      {
+        "command": "arena.chatSendMessage",
+        "title": "Arena: Send Chat Message"
       }
     ],
     "keybindings": [
@@ -222,6 +238,11 @@
       "codeArenaContainer": [
         {
           "type": "webview",
+          "id": "arena.chatView",
+          "name": "Chat Agent"
+        },
+        {
+          "type": "webview",
           "id": "rankingChartView",
           "name": "Personal Statistics"
         }
@@ -264,6 +285,7 @@
     "webpack-cli": "^4.9.1"
   },
   "dependencies": {
+    "axios": "^1.6.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "recharts": "^2.7.2",
